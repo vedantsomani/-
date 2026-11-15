@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 
 async function loadImage(url: string, signal: AbortSignal, reload: boolean) {
+  const requestUrl = new URL(url, window.location.href)
+  // A browser cache reload still uses the same URL at the CDN.
+  if (reload) requestUrl.searchParams.set('image_retry', String(Math.random()).slice(2))
   const requestSignal = AbortSignal.any([signal, AbortSignal.timeout(30_000)])
-  const response = await fetch(url, {
+  const response = await fetch(requestUrl, {
     signal: requestSignal,
     cache: reload ? 'reload' : 'default',
   })
@@ -20,6 +23,15 @@ async function loadImage(url: string, signal: AbortSignal, reload: boolean) {
     return image
   } finally {
     URL.revokeObjectURL(objectUrl)
+  }
+}
+
+async function loadWithRecovery(url: string, signal: AbortSignal, reload: boolean) {
+  try {
+    return await loadImage(url, signal, reload)
+  } catch (error) {
+    if (reload || signal.aborted) throw error
+    return loadImage(url, signal, true)
   }
 }
 
@@ -45,7 +57,7 @@ export function useImageCache(urls: string[]) {
       while (!signal.aborted && nextIndex < queue.length) {
         const url = queue[nextIndex++]
         try {
-          const image = await loadImage(url, signal, reloadUrls.has(url))
+          const image = await loadWithRecovery(url, signal, reloadUrls.has(url))
           if (signal.aborted) return
           cache.set(url, image)
         } catch {
