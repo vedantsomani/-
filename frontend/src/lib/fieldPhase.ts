@@ -44,7 +44,7 @@ export function fieldPhase(field: FieldResponse | null, error: string | null, re
   if (field.status === 'complete') {
     return field.total === 0
       ? { busy: false, label: 'No coverage', pct: null, spoken: 'No SPHEREx images cover this position.' }
-      : { busy: false, label: `${field.frames.length} exposures · ${field.seasons.length} seasons`, pct: null, spoken: `${field.frames.length} images are ready.` }
+      : { busy: false, label: `${field.frames.length} exposures · ${field.seasons.length} seasons`, pct: null, spoken: `${field.frames.length} exposures are available.` }
   }
   return { busy: false, label: '', pct: null, spoken: '' }
 }

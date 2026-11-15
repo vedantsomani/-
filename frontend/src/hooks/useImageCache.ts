@@ -1,60 +1,72 @@
 import { useCallback, useEffect, useState } from 'react'
-import { API_BASE } from '../lib/api'
 
-/** Preload a set of image URLs so blinking between them never waits on the network.
- *  Returns a map url -> loaded <img>, a set of failed URLs, a retry method, and bumps `version` whenever more finish. */
+async function loadImage(url: string, signal: AbortSignal, reload: boolean) {
+  const requestSignal = AbortSignal.any([signal, AbortSignal.timeout(30_000)])
+  const response = await fetch(url, {
+    signal: requestSignal,
+    cache: reload ? 'reload' : 'default',
+  })
+  if (!response.ok) throw new Error(`Image request returned HTTP ${response.status}`)
+
+  const blob = await response.blob()
+  if (!blob.type.startsWith('image/')) throw new Error('Image request returned a non-image response')
+  signal.throwIfAborted()
+
+  const objectUrl = URL.createObjectURL(blob)
+  try {
+    const image = new Image()
+    image.src = objectUrl
+    await image.decode()
+    return image
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
+/** Preload decoded images so blinking between them does not wait on the network. */
 export function useImageCache(urls: string[]) {
   const [cache] = useState(() => new Map<string, HTMLImageElement>())
-  const [pending] = useState(() => new Set<string>())
   const [failed] = useState(() => new Set<string>())
+  const [reloadUrls] = useState(() => new Set<string>())
   const [version, setVersion] = useState(0)
   const [retryTick, setRetryTick] = useState(0)
+  // Field polling can rebuild the array even when the sequence is unchanged.
+  const sequence = JSON.stringify(urls)
 
   useEffect(() => {
-    let alive = true
-    // Limit parallel requests so the first frames to show arrive first.
-    const queue = urls.filter((u) => !cache.has(u) && !pending.has(u) && !failed.has(u))
-    let active = 0
-    const MAX = 8
-    const next = () => {
-      while (alive && active < MAX && queue.length) {
-        const url = queue.shift()!
-        pending.add(url)
-        active++
-        const img = new Image()
-        img.decoding = 'async'
-        // Cross-origin backend (VITE_API_BASE): request CORS so the canvas can still read pixels.
-        if (API_BASE) img.crossOrigin = 'anonymous'
-        img.onload = () => {
-          cache.set(url, img)
-          failed.delete(url)
-          done(url)
-        }
-        img.onerror = () => {
+    const controller = new AbortController()
+    const { signal } = controller
+    const queue = [...new Set<string>(JSON.parse(sequence))].filter(
+      (url) => !cache.has(url) && !failed.has(url),
+    )
+    let nextIndex = 0
+
+    async function preload() {
+      while (!signal.aborted && nextIndex < queue.length) {
+        const url = queue[nextIndex++]
+        try {
+          const image = await loadImage(url, signal, reloadUrls.has(url))
+          if (signal.aborted) return
+          cache.set(url, image)
+        } catch {
+          if (signal.aborted) return
           failed.add(url)
-          done(url)
         }
-        img.src = url
+        reloadUrls.delete(url)
+        setVersion((value) => value + 1)
       }
     }
-    const done = (url: string) => {
-      pending.delete(url)
-      active--
-      setVersion((v) => v + 1)
-      if (alive) next()
-    }
-    next()
-    return () => {
-      alive = false
-    }
-  }, [urls, retryTick, cache, pending, failed])
+
+    for (let worker = 0; worker < Math.min(8, queue.length); worker++) void preload()
+    return () => controller.abort()
+  }, [sequence, retryTick, cache, failed, reloadUrls])
 
   const retry = useCallback((url: string) => {
     failed.delete(url)
     cache.delete(url)
-    pending.delete(url)
-    setRetryTick((t) => t + 1)
-  }, [cache, pending, failed])
+    reloadUrls.add(url)
+    setRetryTick((tick) => tick + 1)
+  }, [cache, failed, reloadUrls])
 
-  return { images: cache, failed: failed, retry, version }
+  return { images: cache, failed, retry, version }
 }
