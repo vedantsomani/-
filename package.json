@@ -1,0 +1,13 @@
+{
+  "name": "spherex-time-machine",
+  "private": true,
+  "description": "Blink SPHEREx near-infrared images of any sky position to find moving and variable objects.",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs",
+    "test": "node scripts/py.mjs -m pytest -q",
+    "build": "npm --prefix frontend run build",
+    "prewarm": "node scripts/prewarm-demo.mjs"
+  },
+  "engines": { "node": ">=20.11" }
+}

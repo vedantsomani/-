@@ -1,0 +1,32 @@
+# Cloudflare Pages response headers (https://developers.cloudflare.com/pages/configuration/headers/).
+# Pages Functions (/api/*) set their own headers; these rules apply to static assets.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: data: blob:; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'
+
+# The HTML shell must always be revalidated so a new deploy is picked up immediately.
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+
+# Vite output: content-hashed file names, safe to cache for a year.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
+
+# Bundled example thumbnails and the landing demo fallback (not hashed: one day).
+/examples/*
+  Cache-Control: public, max-age=86400
+/demo/*
+  Cache-Control: public, max-age=86400
+/favicon.svg
+  Cache-Control: public, max-age=86400

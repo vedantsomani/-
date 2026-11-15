@@ -1,0 +1,23 @@
+# Docker/Fly build context = repo root (see backend/Dockerfile). Keep this lean: the image only
+# needs backend/requirements.txt, backend/app, backend/docker-entrypoint.sh and two files in scripts/.
+.git/
+.gitignore
+.vscode/
+.idea/
+node_modules/
+**/node_modules/
+frontend/
+docs/
+**/.venv/
+**/venv/
+backend/cache/
+backend/.env
+backend/tests/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/*.log
+.vercel/
+**/.vercel/

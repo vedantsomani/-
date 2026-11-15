@@ -1,0 +1,26 @@
+# Render blueprint for the GAMAS backend (FastAPI). Frontend goes on Cloudflare Pages:
+# see docs/deploy-cloudflare.md and set API_ORIGIN there to this service's URL.
+#
+# Use: Render dashboard -> New -> Blueprint -> pick this repository.
+# Needs a paid instance: the free tier has no persistent disk and sleeps when idle.
+services:
+  - type: web
+    name: gamas-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .            # the Dockerfile copies backend/ and scripts/ from the repo root
+    plan: standard              # pick an instance with at least 1 GB RAM
+    numInstances: 1             # jobs live in process memory: never scale out
+    healthCheckPath: /api/health
+    autoDeploy: true
+    disk:
+      name: gamas-cache
+      mountPath: /data
+      sizeGB: 10
+    envVars:
+      - key: SPHEREX_CACHE_DIR
+        value: /data/cache
+      - key: SPHEREX_CACHE_MAX_BYTES   # keep below the disk size
+        value: "8000000000"
+      - key: SPHEREX_TRUST_PROXY       # Render and the Cloudflare proxy forward the client IP
+        value: "true"

@@ -1,0 +1,81 @@
+/* GAMAS design tokens. One neutral dark surface scale, one accent, semantic colours for meaning only,
+   detector colours only on data. Old names (--bg, --plate, --ink, --mute, --rule, --pen ...) are kept as
+   aliases because the canvas player and a few panels still read them. */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/inter-latin-var.woff2") format("woff2-variations"), url("/fonts/inter-latin-var.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/inter-greek-var.woff2") format("woff2-variations"), url("/fonts/inter-greek-var.woff2") format("woff2");
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --s0: #0a0b0d; /* page */
+  --s1: #111317; /* raised: bars, inspector */
+  --s2: #171a1f; /* controls, hover */
+  --s3: #20242a; /* pressed, selected */
+  --line: rgb(255 255 255 / 0.085);
+  --line-2: rgb(255 255 255 / 0.15);
+
+  /* Text: 1 = primary, 2 and 3 pass WCAG AA on --s0 and --s1 */
+  --t1: #ececef;
+  --t2: #a9aeb7;
+  --t3: #858a94;
+
+  /* Accent: primary action and focus only */
+  --accent: #5c9cff;
+  --accent-hover: #7cb0ff;
+  --accent-ink: #06111f;
+  --accent-soft: rgb(92 156 255 / 0.14);
+
+  /* Semantic */
+  --mover: #ff7a6b;
+  --variable: #f2b84b;
+  --appeared: #56d39b;
+  --vanished: #b49cff;
+  --uncertain: #8d929b;
+  --error: #ff7b72;
+  --success: #56d39b;
+
+  /* Detector colours (data only) */
+  --b1: #7d9fff;
+  --b2: #5ccbe8;
+  --b3: #5fdca8;
+  --b4: #d3dc6a;
+  --b5: #ffb35c;
+  --b6: #ff7d92;
+
+  --r-sm: 6px;
+  --r-md: 8px;
+  --bar-h: 48px;
+  --inspector-w: 384px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --font-ui: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-code: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
+
+  /* Legacy aliases */
+  --bg: var(--s0);
+  --plate: var(--s1);
+  --surface-raised: var(--s2);
+  --ink: var(--t1);
+  --mute: var(--t2);
+  --rule: var(--line-2);
+  --pen: var(--accent);
+  --hi: var(--variable);
+  --warm: var(--error);
+  --ok: var(--success);
+  --radius-pill: var(--r-sm);
+  --radius-panel: var(--r-md);
+}

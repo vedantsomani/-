@@ -1,0 +1,14 @@
+# Only takes effect when the build context is backend/ itself. Fly and the documented
+# `docker build -f backend/Dockerfile .` use the REPO ROOT context, which reads /.dockerignore
+# instead; keep the two files in sync.
+.venv/
+venv/
+cache/
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+tests/
+*.log

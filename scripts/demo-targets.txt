@@ -1,0 +1,15 @@
+# Demo fields to pre-build so the live demo is instant.
+# One target per line: "RA Dec" in decimal degrees. Coordinates only, because the CDS name
+# resolver (Sesame) is unreliable. Anything after # is a comment; blank lines are ignored.
+#
+# Targets with fast proper motion (|mu| > 200 mas/yr) must be listed at the SPHEREx mid-survey
+# epoch (MJD 61000): that is the field centre the frontend requests for them, and the field key
+# only matches (so the demo is instant) if the centre agrees to 1e-5 deg.
+# Fields are built at the app's default FOV (5 arcmin); `--fov` changes that for the whole run.
+
+133.76002 -7.24221      # WISE 0855
+269.44629 4.76788       # Barnard's Star
+331.09642 -56.80058     # eps Indi B
+76.95653 30.40144       # RW Aur
+248.16761 66.75498      # R Dra
+150.11916 2.20583       # control field

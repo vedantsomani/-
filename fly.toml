@@ -1,0 +1,62 @@
+# Fly.io config for the SPHEREx Time Machine API (backend only; the frontend is on Vercel).
+# Run all `fly` commands from the repo root. Full walkthrough: docs/deploy.md
+#
+# >>> CHANGE THIS: app names are global on Fly. Pick something unique. <<<
+app = "YOUR-APP-NAME"
+
+# Pick a region near you / IRSA (Caltech, Pasadena). See `fly platform regions`.
+# The volume must be created in the same region (docs/deploy.md step 3).
+primary_region = "lax"
+
+# Give a running job time to finish writing a frame before a deploy/restart stops the machine.
+kill_signal = "SIGINT"
+kill_timeout = "30s"
+
+[build]
+  # Build context is the repo root, so Dockerfile COPY paths start with backend/ and scripts/.
+  dockerfile = "backend/Dockerfile"
+
+[env]
+  PORT = "8080"
+  SPHEREX_CACHE_DIR = "/data/cache"
+  # Not needed while the frontend reaches the API through the Vercel /api rewrite (same origin).
+  # Only set it if a browser page on another origin calls this app directly (JSON list):
+  # SPHEREX_CORS_ORIGINS = '["https://YOUR-FRONTEND.vercel.app"]'
+  # If the 1 GB machine runs out of memory during big fields, lower these (defaults 12 / 4):
+  # SPHEREX_DOWNLOAD_CONCURRENCY = "6"
+  # SPHEREX_PROCESSING_WORKERS = "2"
+
+# Persistent disk for the field cache (cutouts, processed frames, stacks). The volume itself is
+# created once with `fly volumes create spherex_data ...`; it survives deploys and restarts.
+# A volume attaches to ONE machine, and job state lives in that process's memory, so this app
+# is meant to run exactly one machine (deploy with --ha=false).
+[[mounts]]
+  source = "spherex_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Downloads/processing for a field take minutes and run inside the web process. Stopping the
+  # machine when idle (or scaling to zero) would kill a build in progress, so keep it running.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/api/health"
+    protocol = "http"
+    interval = "30s"
+    timeout = "10s"
+    grace_period = "30s"
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1
