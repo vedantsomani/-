@@ -17,6 +17,7 @@ from .fields import FieldManager
 from .fingerprint import FingerprintManager, Target
 from .processing import Grid
 from .analysis import diff_arrays
+from . import keepalive
 from . import batch, colour, explain, investigation, overlay
 from .limits import BUILD, RateLimiter, RateLimitMiddleware, client_ip
 from .store import touch_field
@@ -33,9 +34,12 @@ async def lifespan(app: FastAPI):
     app.state.fingerprints = FingerprintManager()
     app.state.overlays = overlay.OverlayManager()
     janitor = asyncio.create_task(app.state.fields.janitor())
+    pinger = keepalive.start()  # free-tier hosts: stay awake (see keepalive.py)
     yield
-    janitor.cancel()
-    await asyncio.gather(janitor, return_exceptions=True)
+    background = [t for t in (janitor, pinger) if t is not None]
+    for t in background:
+        t.cancel()
+    await asyncio.gather(*background, return_exceptions=True)
     await app.state.overlays.close()
     await app.state.fingerprints.close()
     await app.state.fields.close()
